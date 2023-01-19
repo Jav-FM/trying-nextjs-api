@@ -1,13 +1,15 @@
 import fs from "fs";
-import path from "path";
 import { v4 as uuidv4 } from "uuid";
+import {
+  buildFeedbackPath,
+  getActualFeedback,
+} from "../../../helpers/feedbackHelpers";
 
 //El habler recibe todas las consultas hechas a la ruta /api/feedback
 const handler = (req, res) => {
-  //Ruta donde almacenamos nuestros feedbacks simulando una DB
-  const filePath = path.join(process.cwd(), "data", "feedback.json");
-  //Usamos fs para adquirir la data actual almacenada en la "DB" ficticia
-  const actualFileData = fs.readFileSync(filePath);
+  const buildedPath = buildFeedbackPath();
+  const actualFeedback = getActualFeedback(buildedPath);
+
   //Identificamos qué tipo de request se recibió (en este caso estamos manejando POST)
   if (req.method === "POST") {
     //Obtenemos la data enviada en el body
@@ -20,13 +22,12 @@ const handler = (req, res) => {
       feedback,
     };
     //Usamos fs (propio de Node) para alterar y reescribir la data existente en un archivo json
-    const parsedActualFileData = JSON.parse(actualFileData);
-    parsedActualFileData.push(newFeedback);
-    fs.writeFileSync(filePath, JSON.stringify(parsedActualFileData));
+    actualFeedback.push(newFeedback);
+    fs.writeFileSync(buildFeedbackPath(), JSON.stringify(actualFeedback));
     //Entregamos la respuesta de éxito al cliente
     res.status(201).json({ message: "Success!", feedback: newFeedback });
   } else if (req.method === "GET") {
-    res.status(200).json({ feedback: actualFileData });
+    res.status(200).json({ feedback: actualFeedback });
   } else {
     res.status(404);
   }
